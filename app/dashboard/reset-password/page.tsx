@@ -1,12 +1,11 @@
-import { forgotPasswordAction } from "@/utils/supabase/actions/auth";
+import { resetPasswordAction } from "@/utils/supabase/actions/auth";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import Label from "@/components/ui/label";
-import Link from "next/link";
 import Layout from "@/components/layout/layout";
 
-export default async function ForgotPasswordPage(props: {
+export default async function ResetPassword(props: {
   searchParams: Promise<Message>;
 }) {
   const searchParams = await props.searchParams;
@@ -20,21 +19,27 @@ export default async function ForgotPasswordPage(props: {
           <span className="text-teal-500">Piggsy</span>
         </h1>
         <form className="grid gap-4">
-          <FormMessage message={searchParams} />
-          <Label label="Email" required>
-            <Input name="email" placeholder="you@example.com" required />
+          <Label label="Nueva contraseña" required>
+            <Input
+              type="password"
+              name="password"
+              placeholder="Nueva contraseña"
+              required
+            />
           </Label>
-          <SubmitButton formAction={forgotPasswordAction}>
+          <Label label="Confirmar contraseña" required>
+            <Input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirmar contraseña"
+              required
+            />
+          </Label>
+          <SubmitButton formAction={resetPasswordAction}>
             Restablecer contraseña
           </SubmitButton>
+          <FormMessage message={searchParams} />
         </form>
-        <ul className="text-sm text-foreground text-center">
-          <li>
-            <Link className="text-primary underline" href="/sign-in">
-              Volver al inicio de sesión
-            </Link>
-          </li>
-        </ul>
       </section>
     </Layout>
   );

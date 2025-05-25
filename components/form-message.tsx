@@ -13,7 +13,9 @@ export function FormMessage({ message }: { message: Message }) {
       )}
       {"error" in message && (
         <div className="text-destructive-foreground border-l-2 border-destructive-foreground px-4">
-          {message.error}
+          {message.error == "Invalid login credentials" && (
+            <p>El correo electrónico o la contraseña son incorrectos.</p>
+          )}
         </div>
       )}
       {"message" in message && (
