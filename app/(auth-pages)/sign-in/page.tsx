@@ -1,8 +1,8 @@
-import { signInAction } from "@/utils/supabase/actions/auth";
+import { signInAction } from "@/lib/supabase/actions/auth";
 import { Message } from "@/components/form-message";
 import { Input } from "@/components/ui/input";
 import { Metadata } from "next";
-import { signinMetadata } from "@/utils/metadata";
+import { signinMetadata } from "@/lib/metadata";
 import Label from "@/components/ui/label";
 import Link from "next/link";
 import Layout from "@/components/layout/layout";

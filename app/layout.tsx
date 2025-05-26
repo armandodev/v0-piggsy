@@ -1,4 +1,4 @@
-import { defaultMetadata } from "@/utils/metadata";
+import { defaultMetadata } from "@/lib/metadata";
 import { ThemeProvider } from "next-themes";
 import { Onest } from "next/font/google";
 import { Metadata } from "next";

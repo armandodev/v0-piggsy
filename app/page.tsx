@@ -28,7 +28,7 @@ export default function Home() {
             </div>
             <div className="space-x-4">
               <Link href="/dashboard">
-                <Button>
+                <Button className="bg-teal-500 hover:bg-teal-700 dark:bg-white dark:hover:bg-gray-200">
                   Comenzar
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

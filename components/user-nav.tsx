@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOutAction } from "@/utils/supabase/actions/auth";
+import { signOutAction } from "@/lib/supabase/actions/auth";
 import { User } from "@supabase/supabase-js";
 
 export function UserNav({ user = undefined }: { user?: User }) {

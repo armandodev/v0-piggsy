@@ -1,9 +1,9 @@
 "use server";
 
-import { encodedRedirect } from "@/utils/utils";
+import { encodedRedirect } from "@/lib/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function getUserProfile() {
   const supabase = await createClient();

@@ -1,25 +1,141 @@
-import Layout from "@/components/layout/layout";
-import { createClient } from "@/utils/supabase/server";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Overview } from "@/components/dashboard/overview";
+import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { AccountSummary } from "@/components/dashboard/account-summary";
+import { Layout } from "@/components/layout";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getUserProfile } from "@/lib/supabase/actions/auth";
 
-export default async function ProtectedPage() {
-  const supabase = await createClient();
+export const metadata = {
+  title: "Dashboard | Piggsy",
+  description: "Panel de control del sistema de contabilidad Piggsy",
+};
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/sign-in");
-  }
-
+export default async function DashboardPage() {
+  const { user } = await getUserProfile();
+  if (!user) redirect("/login");
   return (
     <Layout user={user}>
-      <section>
-        <h1>Dashboard</h1>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(user, null, 2)}
-        </pre>
+      <section className="p-4">
+        <h2 className="w-full text-3xl font-bold">Dashboard</h2>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Resumen</TabsTrigger>
+            <TabsTrigger value="transactions">Transacciones</TabsTrigger>
+            <TabsTrigger value="accounts">Cuentas</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Activos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <p className="text-xs text-muted-foreground">
+                    +20.1% respecto al mes anterior
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Pasivos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$12,234.56</div>
+                  <p className="text-xs text-muted-foreground">
+                    -4.5% respecto al mes anterior
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Ingresos del Mes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$18,456.78</div>
+                  <p className="text-xs text-muted-foreground">
+                    +12.3% respecto al mes anterior
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Gastos del Mes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$9,123.45</div>
+                  <p className="text-xs text-muted-foreground">
+                    +7.2% respecto al mes anterior
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+              <Card className="col-span-4">
+                <CardHeader>
+                  <CardTitle>Resumen Financiero</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <Overview />
+                </CardContent>
+              </Card>
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>Transacciones Recientes</CardTitle>
+                  <CardDescription>
+                    Últimas 5 transacciones registradas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RecentTransactions />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          <TabsContent value="transactions" className="space-y-4">
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Transacciones Recientes</CardTitle>
+                <CardDescription>
+                  Últimas transacciones registradas en el sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecentTransactions />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="accounts" className="space-y-4">
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Resumen de Cuentas</CardTitle>
+                <CardDescription>
+                  Resumen de las principales cuentas contables
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AccountSummary />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </section>
     </Layout>
   );
