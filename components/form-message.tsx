@@ -5,22 +5,26 @@ export type Message =
 
 export function FormMessage({ message }: { message: Message }) {
   return (
-    <div className="flex flex-col gap-2 w-full max-w-md text-sm">
+    <p className="flex flex-col gap-2 w-full max-w-md text-sm">
       {"success" in message && (
-        <div className="text-foreground border-l-2 border-foreground px-4">
+        <span className="text-teal-500 dark:text-white border-l-2 border-teal-500 dark:border-white px-4">
           {message.success}
-        </div>
-      )}
-      {"error" in message && (
-        <div className="text-destructive-foreground border-l-2 border-destructive-foreground px-4">
-          {message.error == "Invalid login credentials" && (
-            <p>El correo electrónico o la contraseña son incorrectos.</p>
-          )}
-        </div>
+        </span>
       )}
       {"message" in message && (
-        <div className="text-foreground border-l-2 px-4">{message.message}</div>
+        <span className="text-black dark:text-white border-l-2 border-current px-4">
+          {message.message}
+        </span>
       )}
-    </div>
+      {"error" in message && (
+        <span className="text-red-500 border-l-2 border-red-500 px-4">
+          {message.error == "Invalid login credentials" ? (
+            <p>El correo electrónico o la contraseña son incorrectos.</p>
+          ) : (
+            message.error
+          )}
+        </span>
+      )}
+    </p>
   );
 }

@@ -1,41 +1,36 @@
 import { forgotPasswordAction } from "@/utils/supabase/actions/auth";
-import { FormMessage, Message } from "@/components/form-message";
-import { SubmitButton } from "@/components/submit-button";
+import { Message } from "@/components/form-message";
 import { Input } from "@/components/ui/input";
 import Label from "@/components/ui/label";
 import Link from "next/link";
 import Layout from "@/components/layout/layout";
+import { Form } from "@/components/layout";
 
 export default async function ForgotPasswordPage(props: {
   searchParams: Promise<Message>;
 }) {
   const searchParams = await props.searchParams;
   return (
-    <Layout form>
-      <section className="w-[90%] max-w-sm mx-auto grid gap-2">
-        <h1 className="grid text-center">
-          <span className="text-2xl font-medium text-teal-900 dark:text-teal-100">
-            Restablecer contraseña
-          </span>
-          <span className="text-teal-500">Piggsy</span>
-        </h1>
-        <form className="grid gap-4">
-          <FormMessage message={searchParams} />
-          <Label label="Email" required>
-            <Input name="email" placeholder="you@example.com" required />
-          </Label>
-          <SubmitButton formAction={forgotPasswordAction}>
-            Restablecer contraseña
-          </SubmitButton>
-        </form>
-        <ul className="text-sm text-foreground text-center">
-          <li>
-            <Link className="text-primary underline" href="/sign-in">
-              Volver al inicio de sesión
-            </Link>
-          </li>
-        </ul>
-      </section>
+    <Layout className="flex flex-col items-center justify-center" form>
+      <Form
+        title="Restablecer contraseña"
+        searchParams={searchParams}
+        formAction={forgotPasswordAction}
+      >
+        <Label label="Email" required>
+          <Input name="email" placeholder="you@example.com" required />
+        </Label>
+      </Form>
+      <ul className="text-center mt-4">
+        <li>
+          <Link
+            className="text-teal-500 dark:text-white underline"
+            href="/sign-in"
+          >
+            Volver al inicio de sesión
+          </Link>
+        </li>
+      </ul>
     </Layout>
   );
 }

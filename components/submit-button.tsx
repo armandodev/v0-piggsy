@@ -10,13 +10,18 @@ type Props = ComponentProps<typeof Button> & {
 
 export function SubmitButton({
   children,
-  pendingText = "Submitting...",
+  pendingText = "Enviando...",
   ...props
 }: Props) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" aria-disabled={pending} {...props}>
+    <Button
+      className="bg-teal-500 hover:bg-teal-700 dark:bg-white dark:hover:bg-gray-200"
+      type="submit"
+      aria-disabled={pending}
+      {...props}
+    >
       {pending ? pendingText : children}
     </Button>
   );
