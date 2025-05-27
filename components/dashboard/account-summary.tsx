@@ -6,47 +6,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils/format-utils";
+import type { AccountBalance } from "@/lib/services/dashboard-service";
 
-const accounts = [
-  {
-    id: "1",
-    code: "1000",
-    name: "Caja",
-    type: "Activo",
-    balance: 5000.0,
-  },
-  {
-    id: "2",
-    code: "1100",
-    name: "Bancos",
-    type: "Activo",
-    balance: 25000.0,
-  },
-  {
-    id: "3",
-    code: "1200",
-    name: "Cuentas por Cobrar",
-    type: "Activo",
-    balance: 15000.0,
-  },
-  {
-    id: "4",
-    code: "2000",
-    name: "Cuentas por Pagar",
-    type: "Pasivo",
-    balance: 8000.0,
-  },
-  {
-    id: "5",
-    code: "3000",
-    name: "Capital",
-    type: "Capital",
-    balance: 37000.0,
-  },
-];
+interface AccountSummaryProps {
+  accounts: AccountBalance[];
+}
 
-export function AccountSummary() {
+export function AccountSummary({ accounts }: AccountSummaryProps) {
+  if (!accounts || accounts.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <p>No hay cuentas con saldo disponibles</p>
+      </div>
+    );
+  }
+
+  const getAccountTypeBadge = (type: string) => {
+    switch (type) {
+      case "asset":
+        return <Badge variant="default">Activo</Badge>;
+      case "liability":
+        return <Badge variant="secondary">Pasivo</Badge>;
+      case "equity":
+        return <Badge variant="outline">Capital</Badge>;
+      case "revenue":
+        return <Badge className="bg-green-500">Ingreso</Badge>;
+      case "expense":
+        return <Badge className="bg-red-500">Gasto</Badge>;
+      default:
+        return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -60,11 +53,13 @@ export function AccountSummary() {
       <TableBody>
         {accounts.map((account) => (
           <TableRow key={account.id}>
-            <TableCell>{account.code}</TableCell>
+            <TableCell className="font-medium">{account.code}</TableCell>
             <TableCell>{account.name}</TableCell>
-            <TableCell>{account.type}</TableCell>
+            <TableCell>{getAccountTypeBadge(account.account_type)}</TableCell>
             <TableCell className="text-right">
-              {formatCurrency(account.balance)}
+              <span className={account.balance < 0 ? "text-red-500" : ""}>
+                {formatCurrency(Math.abs(account.balance))}
+              </span>
             </TableCell>
           </TableRow>
         ))}

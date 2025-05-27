@@ -10,9 +10,15 @@ import { Overview } from "@/components/dashboard/overview";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { AccountSummary } from "@/components/dashboard/account-summary";
 import { Layout } from "@/components/layout";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserProfile } from "@/lib/supabase/actions/auth";
+import {
+  getDashboardMetrics,
+  getRecentTransactions,
+  getAccountSummary,
+  getMonthlyChartData,
+} from "@/lib/services/dashboard-service";
+import { formatCurrency } from "@/lib/utils/format-utils";
 
 export const metadata = {
   title: "Dashboard | Piggsy",
@@ -22,6 +28,21 @@ export const metadata = {
 export default async function DashboardPage() {
   const { user } = await getUserProfile();
   if (!user) redirect("/login");
+
+  // Fetch dashboard data
+  const [metrics, recentTransactions, accountSummary, chartData] =
+    await Promise.all([
+      getDashboardMetrics(),
+      getRecentTransactions(5),
+      getAccountSummary(),
+      getMonthlyChartData(),
+    ]);
+
+  const formatPercentage = (value: number) => {
+    const sign = value >= 0 ? "+" : "";
+    return `${sign}${value.toFixed(1)}%`;
+  };
+
   return (
     <Layout user={user}>
       <section className="p-4">
@@ -41,9 +62,12 @@ export default async function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(metrics.totalAssets)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% respecto al mes anterior
+                    {formatPercentage(metrics.assetChange)} respecto al mes
+                    anterior
                   </p>
                 </CardContent>
               </Card>
@@ -54,9 +78,12 @@ export default async function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$12,234.56</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(metrics.totalLiabilities)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    -4.5% respecto al mes anterior
+                    {formatPercentage(metrics.liabilityChange)} respecto al mes
+                    anterior
                   </p>
                 </CardContent>
               </Card>
@@ -67,9 +94,12 @@ export default async function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$18,456.78</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(metrics.monthlyRevenue)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +12.3% respecto al mes anterior
+                    {formatPercentage(metrics.revenueChange)} respecto al mes
+                    anterior
                   </p>
                 </CardContent>
               </Card>
@@ -80,9 +110,12 @@ export default async function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$9,123.45</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(metrics.monthlyExpenses)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +7.2% respecto al mes anterior
+                    {formatPercentage(metrics.expenseChange)} respecto al mes
+                    anterior
                   </p>
                 </CardContent>
               </Card>
@@ -93,7 +126,7 @@ export default async function DashboardPage() {
                   <CardTitle>Resumen Financiero</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                  <Overview />
+                  <Overview data={chartData} />
                 </CardContent>
               </Card>
               <Card className="col-span-3">
@@ -104,7 +137,7 @@ export default async function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RecentTransactions />
+                  <RecentTransactions transactions={recentTransactions} />
                 </CardContent>
               </Card>
             </div>
@@ -118,7 +151,7 @@ export default async function DashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RecentTransactions />
+                <RecentTransactions transactions={recentTransactions} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -131,7 +164,7 @@ export default async function DashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AccountSummary />
+                <AccountSummary accounts={accountSummary} />
               </CardContent>
             </Card>
           </TabsContent>

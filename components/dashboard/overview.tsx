@@ -9,40 +9,24 @@ import {
   Tooltip,
 } from "recharts";
 
-const data = [
-  {
-    name: "Ene",
-    ingresos: 18000,
-    gastos: 9000,
-  },
-  {
-    name: "Feb",
-    ingresos: 16000,
-    gastos: 8500,
-  },
-  {
-    name: "Mar",
-    ingresos: 19000,
-    gastos: 9500,
-  },
-  {
-    name: "Abr",
-    ingresos: 17000,
-    gastos: 8000,
-  },
-  {
-    name: "May",
-    ingresos: 20000,
-    gastos: 10000,
-  },
-  {
-    name: "Jun",
-    ingresos: 21000,
-    gastos: 9800,
-  },
-];
+interface OverviewProps {
+  data: Array<{
+    name: string;
+    ingresos: number;
+    gastos: number;
+  }>;
+}
 
-export function Overview() {
+export function Overview({ data }: OverviewProps) {
+  // If no data is provided, show a message
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[350px] text-muted-foreground">
+        <p>No hay datos disponibles para mostrar</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data}>
@@ -58,10 +42,10 @@ export function Overview() {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => `$${value.toLocaleString()}`}
         />
         <Tooltip
-          formatter={(value) => [`$${value}`, ""]}
+          formatter={(value: number) => [`$${value.toLocaleString()}`, ""]}
           labelFormatter={(label) => `Mes: ${label}`}
         />
         <Bar dataKey="ingresos" fill="#4f46e5" radius={[4, 4, 0, 0]} />
