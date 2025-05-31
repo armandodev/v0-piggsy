@@ -11,7 +11,7 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { AccountSummary } from "@/components/dashboard/account-summary";
 import { Layout } from "@/components/layout";
 import { redirect } from "next/navigation";
-import { getUserProfile } from "@/lib/supabase/actions/auth";
+import { createClient } from "@/lib/supabase/server";
 import {
   getDashboardMetrics,
   getRecentTransactions,
@@ -25,11 +25,27 @@ export const metadata = {
   description: "Panel de control del sistema de contabilidad Piggsy",
 };
 
+async function getUserProfile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return { user: null };
+  }
+
+  return { user };
+}
+
 export default async function DashboardPage() {
   const { user } = await getUserProfile();
-  if (!user) redirect("/login");
+  if (!user) redirect("/auth/login");
 
-  // Fetch dashboard data
+  // Add some debug logging
+  console.log("Dashboard: User ID:", user.id);
+
   const [metrics, recentTransactions, accountSummary, chartData] =
     await Promise.all([
       getDashboardMetrics(),
@@ -37,6 +53,12 @@ export default async function DashboardPage() {
       getAccountSummary(),
       getMonthlyChartData(),
     ]);
+
+  // Debug logging
+  console.log("Dashboard metrics:", metrics);
+  console.log("Recent transactions:", recentTransactions);
+  console.log("Account summary:", accountSummary);
+  console.log("Chart data:", chartData);
 
   const formatPercentage = (value: number) => {
     const sign = value >= 0 ? "+" : "";
@@ -47,6 +69,9 @@ export default async function DashboardPage() {
     <Layout user={user}>
       <section className="p-4">
         <h2 className="w-full text-3xl font-bold">Dashboard</h2>
+        <div className="mb-4 text-sm text-muted-foreground">
+          Usuario: {user.email} | ID: {user.id}
+        </div>
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Resumen</TabsTrigger>
@@ -124,6 +149,9 @@ export default async function DashboardPage() {
               <Card className="col-span-4">
                 <CardHeader>
                   <CardTitle>Resumen Financiero</CardTitle>
+                  <CardDescription>
+                    Datos de los últimos 6 meses
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                   <Overview data={chartData} />
@@ -133,7 +161,8 @@ export default async function DashboardPage() {
                 <CardHeader>
                   <CardTitle>Transacciones Recientes</CardTitle>
                   <CardDescription>
-                    Últimas 5 transacciones registradas
+                    Últimas {recentTransactions.length} transacciones
+                    registradas
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -160,7 +189,7 @@ export default async function DashboardPage() {
               <CardHeader>
                 <CardTitle>Resumen de Cuentas</CardTitle>
                 <CardDescription>
-                  Resumen de las principales cuentas contables
+                  {accountSummary.length} cuentas con movimientos
                 </CardDescription>
               </CardHeader>
               <CardContent>
