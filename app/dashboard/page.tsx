@@ -25,27 +25,20 @@ export const metadata = {
   description: "Panel de control del sistema de contabilidad Piggsy",
 };
 
-async function getUserProfile() {
+export default async function DashboardPage() {
+  // Obtener usuario actual
   const supabase = await createClient();
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
 
+  // Redirigir si no hay usuario
   if (error || !user) {
-    return { user: null };
+    redirect("/sign-in");
   }
 
-  return { user };
-}
-
-export default async function DashboardPage() {
-  const { user } = await getUserProfile();
-  if (!user) redirect("/auth/login");
-
-  // Add some debug logging
-  console.log("Dashboard: User ID:", user.id);
-
+  // Cargar todos los datos en paralelo
   const [metrics, recentTransactions, accountSummary, chartData] =
     await Promise.all([
       getDashboardMetrics(),
@@ -54,12 +47,7 @@ export default async function DashboardPage() {
       getMonthlyChartData(),
     ]);
 
-  // Debug logging
-  console.log("Dashboard metrics:", metrics);
-  console.log("Recent transactions:", recentTransactions);
-  console.log("Account summary:", accountSummary);
-  console.log("Chart data:", chartData);
-
+  // Función para formatear porcentajes
   const formatPercentage = (value: number) => {
     const sign = value >= 0 ? "+" : "";
     return `${sign}${value.toFixed(1)}%`;
@@ -67,18 +55,23 @@ export default async function DashboardPage() {
 
   return (
     <Layout user={user}>
-      <section className="p-4">
-        <h2 className="w-full text-3xl font-bold">Dashboard</h2>
-        <div className="mb-4 text-sm text-muted-foreground">
-          Usuario: {user.email} | ID: {user.id}
+      <section className="p-4 space-y-4">
+        <div>
+          <h2 className="text-3xl font-bold">Dashboard</h2>
+          <p className="text-sm text-muted-foreground">
+            Bienvenido, {user.email}
+          </p>
         </div>
+
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
             <TabsTrigger value="accounts">Cuentas</TabsTrigger>
           </TabsList>
+
           <TabsContent value="overview" className="space-y-4">
+            {/* Métricas principales */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -90,12 +83,14 @@ export default async function DashboardPage() {
                   <div className="text-2xl font-bold">
                     {formatCurrency(metrics.totalAssets)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPercentage(metrics.assetChange)} respecto al mes
-                    anterior
-                  </p>
+                  {metrics.assetChange !== 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatPercentage(metrics.assetChange)} vs mes anterior
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -106,12 +101,15 @@ export default async function DashboardPage() {
                   <div className="text-2xl font-bold">
                     {formatCurrency(metrics.totalLiabilities)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPercentage(metrics.liabilityChange)} respecto al mes
-                    anterior
-                  </p>
+                  {metrics.liabilityChange !== 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatPercentage(metrics.liabilityChange)} vs mes
+                      anterior
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -122,12 +120,14 @@ export default async function DashboardPage() {
                   <div className="text-2xl font-bold">
                     {formatCurrency(metrics.monthlyRevenue)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPercentage(metrics.revenueChange)} respecto al mes
-                    anterior
-                  </p>
+                  {metrics.revenueChange !== 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatPercentage(metrics.revenueChange)} vs mes anterior
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -138,31 +138,34 @@ export default async function DashboardPage() {
                   <div className="text-2xl font-bold">
                     {formatCurrency(metrics.monthlyExpenses)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPercentage(metrics.expenseChange)} respecto al mes
-                    anterior
-                  </p>
+                  {metrics.expenseChange !== 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatPercentage(metrics.expenseChange)} vs mes anterior
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
+
+            {/* Gráficos y tablas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
               <Card className="col-span-4">
                 <CardHeader>
                   <CardTitle>Resumen Financiero</CardTitle>
                   <CardDescription>
-                    Datos de los últimos 6 meses
+                    Ingresos vs Gastos - Últimos 6 meses
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                   <Overview data={chartData} />
                 </CardContent>
               </Card>
+
               <Card className="col-span-3">
                 <CardHeader>
                   <CardTitle>Transacciones Recientes</CardTitle>
                   <CardDescription>
-                    Últimas {recentTransactions.length} transacciones
-                    registradas
+                    Últimos movimientos registrados
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -171,12 +174,13 @@ export default async function DashboardPage() {
               </Card>
             </div>
           </TabsContent>
+
           <TabsContent value="transactions" className="space-y-4">
-            <Card className="col-span-3">
+            <Card>
               <CardHeader>
-                <CardTitle>Transacciones Recientes</CardTitle>
+                <CardTitle>Historial de Transacciones</CardTitle>
                 <CardDescription>
-                  Últimas transacciones registradas en el sistema
+                  Todas las transacciones registradas en el sistema
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -184,12 +188,13 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
           <TabsContent value="accounts" className="space-y-4">
-            <Card className="col-span-3">
+            <Card>
               <CardHeader>
-                <CardTitle>Resumen de Cuentas</CardTitle>
+                <CardTitle>Balances de Cuentas</CardTitle>
                 <CardDescription>
-                  {accountSummary.length} cuentas con movimientos
+                  Estado actual de todas las cuentas contables
                 </CardDescription>
               </CardHeader>
               <CardContent>
