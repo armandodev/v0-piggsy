@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 import {
   Card,
   CardContent,
@@ -11,14 +12,22 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { AccountSummary } from "@/components/dashboard/account-summary";
 import { Layout } from "@/components/layout";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import {
+  getCurrentUser,
   getDashboardMetrics,
   getRecentTransactions,
   getAccountSummary,
   getMonthlyChartData,
-} from "@/lib/services/dashboard-service";
+} from "@/lib/services";
 import { formatCurrency } from "@/lib/utils/format-utils";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CreditCard,
+  Wallet,
+  PiggyBank,
+} from "lucide-react";
 
 export const metadata = {
   title: "Dashboard | Piggsy",
@@ -26,15 +35,11 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-  // Obtener usuario actual
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  // Redirigir si no hay usuario
-  if (error || !user) {
+  // Verificar autenticación
+  let user;
+  try {
+    user = await getCurrentUser();
+  } catch {
     redirect("/sign-in");
   }
 
@@ -55,12 +60,91 @@ export default async function DashboardPage() {
 
   return (
     <Layout user={user}>
-      <section className="p-4 space-y-4">
+      <section className="p-4 space-y-6">
         <div>
           <h2 className="text-3xl font-bold">Dashboard</h2>
           <p className="text-sm text-muted-foreground">
-            Bienvenido, {user.email}
+            Resumen financiero de tu empresa
           </p>
+        </div>
+
+        {/* Métricas principales */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Activos
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(metrics.totalAssets)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Capital de trabajo: {formatCurrency(metrics.workingCapital)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Pasivos
+              </CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(metrics.totalLiabilities)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Razón corriente: {metrics.currentRatio.toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Ingresos del Mes
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(metrics.monthlyRevenue)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Capital contable: {formatCurrency(metrics.totalEquity)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Utilidad Neta
+              </CardTitle>
+              {metrics.netIncome >= 0 ? (
+                <PiggyBank className="h-4 w-4 text-green-600" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-red-600" />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`text-2xl font-bold ${metrics.netIncome >= 0 ? "text-green-600" : "text-red-600"}`}
+              >
+                {formatCurrency(Math.abs(metrics.netIncome))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.netIncome >= 0
+                  ? "Utilidad del período"
+                  : "Pérdida del período"}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
@@ -71,87 +155,11 @@ export default async function DashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            {/* Métricas principales */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Activos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(metrics.totalAssets)}
-                  </div>
-                  {metrics.assetChange !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage(metrics.assetChange)} vs mes anterior
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Pasivos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(metrics.totalLiabilities)}
-                  </div>
-                  {metrics.liabilityChange !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage(metrics.liabilityChange)} vs mes
-                      anterior
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Ingresos del Mes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(metrics.monthlyRevenue)}
-                  </div>
-                  {metrics.revenueChange !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage(metrics.revenueChange)} vs mes anterior
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Gastos del Mes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(metrics.monthlyExpenses)}
-                  </div>
-                  {metrics.expenseChange !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage(metrics.expenseChange)} vs mes anterior
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Gráficos y tablas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
               <Card className="col-span-4">
                 <CardHeader>
-                  <CardTitle>Resumen Financiero</CardTitle>
+                  <CardTitle>Tendencia Financiera</CardTitle>
                   <CardDescription>
                     Ingresos vs Gastos - Últimos 6 meses
                   </CardDescription>
@@ -170,6 +178,88 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <RecentTransactions transactions={recentTransactions} />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Indicadores financieros */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Liquidez</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">
+                      {metrics.currentRatio.toFixed(2)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Razón Corriente
+                    </p>
+                    <div
+                      className={`text-xs mt-2 ${metrics.currentRatio >= 1.5 ? "text-green-600" : "text-orange-600"}`}
+                    >
+                      {metrics.currentRatio >= 1.5
+                        ? "✓ Saludable"
+                        : "⚠ Mejorable"}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Rentabilidad</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">
+                      {metrics.monthlyRevenue > 0
+                        ? (
+                            (metrics.netIncome / metrics.monthlyRevenue) *
+                            100
+                          ).toFixed(1)
+                        : "0.0"}
+                      %
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Margen de Utilidad
+                    </p>
+                    <div
+                      className={`text-xs mt-2 ${metrics.netIncome > 0 ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {metrics.netIncome > 0 ? "✓ Rentable" : "✗ Pérdida"}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Endeudamiento</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">
+                      {metrics.totalEquity > 0
+                        ? (
+                            (metrics.totalLiabilities / metrics.totalEquity) *
+                            100
+                          ).toFixed(1)
+                        : "0.0"}
+                      %
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pasivo / Capital
+                    </p>
+                    <div
+                      className={`text-xs mt-2 ${metrics.totalLiabilities / metrics.totalEquity <= 1 ? "text-green-600" : "text-orange-600"}`}
+                    >
+                      {metrics.totalLiabilities / metrics.totalEquity <= 1
+                        ? "✓ Controlado"
+                        : "⚠ Alto"}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -1,0 +1,13 @@
+{
+  "extends": [
+    "next",
+    "next/core-web-vitals",
+    "prettier"
+  ],
+  "plugins": ["tailwindcss"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "tailwindcss/no-custom-classname": "off"
+  }
+}
+

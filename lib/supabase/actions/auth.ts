@@ -4,13 +4,14 @@ import { encodedRedirect } from "@/lib/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { User } from "@supabase/supabase-js";
 
 export async function getUserProfile() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user;
+  return user as User;
 }
 
 export const signUpAction = async (formData: FormData) => {
